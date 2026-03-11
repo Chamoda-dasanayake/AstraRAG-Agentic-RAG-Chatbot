@@ -5,12 +5,19 @@ AstraRAG is an Agentic Retrieval-Augmented Generation (RAG) chatbot that answers
 🚀 Features
 
 Agent-based AI architecture using CrewAI
+
 Retrieval-Augmented Generation (RAG)
+
 Semantic document search using ChromaDB
+
 Fast inference using Groq LLM
+
 Clean chat interface built with Streamlit
+
 REST API backend with FastAPI
+
 Document ingestion pipeline for knowledge base creation
+
 
 🏗️ System Architecture
 
