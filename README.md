@@ -1,22 +1,15 @@
 AstraRAG – Agentic RAG Chatbot
 
-AstraRAG is an Agentic Retrieval-Augmented Generation (RAG) chatbot that answers user questions using custom documents.
-The system integrates Streamlit, FastAPI, CrewAI agents, LlamaIndex, ChromaDB, and Groq LLM to build a modular AI application.
+AstraRAG is an Agentic Retrieval-Augmented Generation (RAG) chatbot that answers user questions using custom documents. The system integrates Streamlit, FastAPI, CrewAI agents, LlamaIndex, ChromaDB, and Groq LLM to build a modular AI application.
 
 🚀 Features
 
 Agent-based AI architecture using CrewAI
-
 Retrieval-Augmented Generation (RAG)
-
 Semantic document search using ChromaDB
-
 Fast inference using Groq LLM
-
 Clean chat interface built with Streamlit
-
 REST API backend with FastAPI
-
 Document ingestion pipeline for knowledge base creation
 
 🏗️ System Architecture
