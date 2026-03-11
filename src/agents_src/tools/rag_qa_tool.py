@@ -58,7 +58,20 @@ def rag_query_tool(query: str) -> str:
         query_engine = index.as_query_engine(similarity_top_k=2)
         response = query_engine.query(query_text)
         
-        return str(response).strip() or "No relevant information found."
+        answer_text = str(response).strip() or "No relevant information found."
+        
+        if response.source_nodes:
+            sources_info = "\n\nRetrieved Source Files:\n"
+            # Get unique file names
+            seen_files = set()
+            for node in response.source_nodes:
+                file_name = node.metadata.get('file_name', 'Unknown Source')
+                if file_name not in seen_files:
+                    sources_info += f"- {file_name}\n"
+                    seen_files.add(file_name)
+            answer_text += sources_info
+            
+        return answer_text
 
     except Exception as e:
         logger.exception("Tool execution failed")
