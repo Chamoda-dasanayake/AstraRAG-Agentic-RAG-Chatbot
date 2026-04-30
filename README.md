@@ -1,108 +1,80 @@
-AstraRAG – Agentic RAG Chatbot
+# 🚀 AstraRAG – Agentic RAG Chatbot
 
-AstraRAG is an Agentic Retrieval-Augmented Generation (RAG) chatbot that answers user questions using custom documents. The system integrates Streamlit, FastAPI, CrewAI agents, LlamaIndex, ChromaDB, and Groq LLM to build a modular AI application.
+AstraRAG is an intelligent chatbot that combines **Retrieval-Augmented Generation (RAG)** with AI agents to deliver accurate, context-aware answers from your custom documents.
 
-🚀 Features
+---
 
-Agent-based AI architecture using CrewAI
+## 📌 Problem Statement
+Traditional chatbots often generate inaccurate or hallucinated responses due to limited context awareness and lack of real-time knowledge retrieval.  
 
-Retrieval-Augmented Generation (RAG)
+Basic RAG systems also follow a static pipeline, making them less effective for complex queries and multi-step reasoning.
 
-Semantic document search using ChromaDB
+---
 
-Fast inference using Groq LLM
+## 💡 Solution
+AstraRAG enhances RAG by integrating **AI agents** that can plan, retrieve, and refine information before generating responses.  
 
-Clean chat interface built with Streamlit
+This enables:
+- Better reasoning  
+- Dynamic query handling  
+- More accurate, context-aware answers  
 
-REST API backend with FastAPI
+---
 
-Document ingestion pipeline for knowledge base creation
+## 🧠 Core Concept
+Instead of relying only on pre-trained knowledge, AstraRAG:
+- Retrieves relevant information from your documents  
+- Augments prompts with contextual data  
+- Generates accurate, source-backed responses  
 
+---
 
-🏗️ System Architecture
+## ⚙️ How It Works
 
-The system consists of five main components:
+| Step | Component            | Description |
+|------|---------------------|------------|
+| 1    | Document Ingestion  | Files are chunked, embedded, and stored in ChromaDB |
+| 2    | Query Embedding     | User query is converted into a vector |
+| 3    | Semantic Search     | Relevant document chunks are retrieved |
+| 4    | Agent Reasoning     | AI agent analyzes and refines the response |
+| 5    | LLM Generation      | LLM generates the final answer |
 
-Document Ingestion Pipeline
+---
 
-Loads documents from docs_dir
+## ✨ Key Features
+- 🤖 Agentic AI with autonomous reasoning  
+- 📚 Custom document-based knowledge  
+- 🔍 Source-aware responses  
+- ⚡ Fast inference using optimized LLMs  
+- 💻 Streamlit-based chat UI  
+- 🔗 FastAPI backend for integration  
 
-Splits documents into smaller chunks
+---
 
-Generates embeddings using BAAI/bge-small-en-v1.5
+## 🎯 Use Cases
+- Internal knowledge bases  
+- Research assistants  
+- Customer support systems  
+- Domain-specific Q&A (technical, academic, etc.)  
 
-Stores embeddings in ChromaDB vector database
+---
 
-Agentic AI Layer
+## 🛠️ Tech Stack
 
-Built using CrewAI
+| Technology | Role |
+|-----------|------|
+| Streamlit | Frontend UI |
+| FastAPI | Backend API |
+| CrewAI | AI Agent orchestration |
+| ChromaDB | Vector database |
+| Groq (Llama 3.1) | Language model |
+| BAAI/bge-small-en-v1.5 | Embedding model |
 
-A Question Answer Agent acts as a knowledge analyst
+---
 
-Uses Groq LLM (llama-3.1-8b-instant) for reasoning
+## ⚙️ How to Run
 
-RAG Retrieval Tool
-
-Converts user query into embeddings
-
-Performs semantic search on ChromaDB
-
-Retrieves the most relevant document chunks
-
-Backend API
-
-Implemented using FastAPI
-
-Provides endpoint: /chat/answer
-
-Handles communication between frontend and AI agents
-
-Frontend Interface
-
-Built using Streamlit
-
-Provides a chat-style interface
-
-Displays answers and document sources
-
-🔄 System Workflow
-
-Add documents to the docs_dir folder
-
-Run the ingestion pipeline to create vector embeddings
-
-Start the FastAPI backend
-
-Launch the Streamlit frontend
-
-Ask questions through the chat interface
-
-The AI agent retrieves relevant document information and generates answers
-
-🛠️ Tech Stack
-
-Frontend
-
-Streamlit
-
-Backend
-
-FastAPI
-
-AI Frameworks
-
-CrewAI
-
-LlamaIndex
-
-Vector Database
-
-ChromaDB
-
-LLM Provider
-
-Groq API
-
-Embedding Model
-
-BAAI/bge-small-en-v1.5
+### 1️⃣ Clone the Repository
+```bash
+git clone https://github.com/Chamoda-dasanayake/AstraRAG-Agentic-RAG-Chatbot.git
+cd AstraRAG-Agentic-RAG-Chatbot
