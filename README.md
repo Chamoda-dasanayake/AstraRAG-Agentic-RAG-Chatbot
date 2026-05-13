@@ -67,8 +67,14 @@ Instead of relying only on pre-trained knowledge, AstraRAG:
 | FastAPI | Backend API |
 | CrewAI | AI Agent orchestration |
 | ChromaDB | Vector database |
-| Groq (Llama 3.1) | Language model |
+| OpenAI | Language model |
 | BAAI/bge-small-en-v1.5 | Embedding model |
+
+---
+
+## ☁️ Deploy (simple path)
+
+Step-by-step **Render (API) + Streamlit Cloud (UI)** is in **[DEPLOY.md](DEPLOY.md)**.
 
 ---
 

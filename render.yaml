@@ -1,0 +1,20 @@
+# Render Blueprint — deploy the API as a Python Web Service (no Docker required on free tier).
+# Dashboard: New → Blueprint → paste this file or connect repo and use these settings manually.
+
+services:
+  - type: web
+    name: astrarag-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.backend_src.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: API_HOST
+        value: "0.0.0.0"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"

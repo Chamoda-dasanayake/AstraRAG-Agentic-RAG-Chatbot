@@ -2,7 +2,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import logging
+import os
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from src.backend_src.api.chat import router as chat_router
 from src.backend_src.api.documents import router as documents_router
 from src.backend_src.config.backend_settings import Settings
@@ -18,6 +22,18 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# CORS: set CORS_ORIGINS=https://your-app.streamlit.app (comma-separated). Use * only for quick demos.
+_cors = os.getenv("CORS_ORIGINS", "*").strip()
+_cors_list = [o.strip() for o in _cors.split(",") if o.strip()] or ["*"]
+_allow_cred = "*" not in _cors_list
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_list,
+    allow_credentials=_allow_cred,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(chat_router)
 app.include_router(documents_router)
 
@@ -31,11 +47,7 @@ settings = Settings()
 if __name__ == "__main__":
     import uvicorn
 
-    # Run the FastAPI app when executed as a script/module.
-    # Use the app object directly so output appears in the console.
-    uvicorn.run(
-        app,
-        host=settings.API_HOST,
-        port=settings.API_PORT,
-        log_level="info",
-    )
+    # Render / Railway / Fly set PORT; local dev uses API_PORT from .env
+    port = int(os.environ.get("PORT", str(settings.API_PORT)))
+    host = os.environ.get("API_HOST", settings.API_HOST)
+    uvicorn.run(app, host=host, port=port, log_level="info")
