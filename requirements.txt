@@ -10,7 +10,8 @@ streamlit==1.49.1
 llama-index==0.14.21
 llama-index-embeddings-huggingface==0.6.1
 sentence-transformers>=2.2.2,<3.0.0
-transformers>=4.36.0,<4.45.0
+# crewai needs tokenizers>=0.21; transformers<4.47 pins tokenizers<0.20 — use 4.47+.
+transformers>=4.47.0,<5.0.0
 llama-index-vector-stores-chroma==0.5.3
 
 chromadb~=1.1.0
