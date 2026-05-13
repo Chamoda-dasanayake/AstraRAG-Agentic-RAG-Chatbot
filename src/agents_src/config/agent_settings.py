@@ -2,7 +2,6 @@ from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from typing import Optional
 
-# load env variables from .env file
 load_dotenv()
 
 
@@ -36,7 +35,7 @@ class AgentSettings(BaseSettings):
         return (self.OPENAI_API_KEY or "").strip()
 
     def _openai_model_base_id(self) -> str:
-        """Normalized OpenAI model id (no provider prefix), for LlamaIndex OpenAI path only."""
+        """OpenAI-style model id for the LlamaIndex OpenAI LLM path (non-Gemini)."""
         raw = (self.MODEL_NAME or "gpt-4o-mini").strip().removeprefix("openai/")
         lower = raw.lower()
         if lower.startswith("llama-") or "groq" in lower:
@@ -49,7 +48,7 @@ class AgentSettings(BaseSettings):
         return self._openai_model_base_id()
 
     def google_genai_model_id(self) -> str:
-        """Model id for LlamaIndex GoogleGenAI (no 'gemini/' LiteLLM prefix)."""
+        """Gemini model id for LlamaIndex GoogleGenAI (strip a leading `gemini/`)."""
         m = (self.MODEL_NAME or "gemini-2.0-flash").strip().removeprefix("gemini/")
         return m if m else "gemini-2.0-flash"
 

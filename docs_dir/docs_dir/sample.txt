@@ -1,2 +1,0 @@
-This is a sample document for ingestion.
-It should be parsed and added to the Chroma vector store.

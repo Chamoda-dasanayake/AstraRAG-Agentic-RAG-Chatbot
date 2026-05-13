@@ -1,10 +1,12 @@
 import logging
+import re
+
 from fastapi import APIRouter, HTTPException
 from openai import RateLimitError
-from src.backend_src.services.chat import LocalRateLimitError
 from pydantic import BaseModel
 from typing import List
-from src.backend_src.services.chat import get_answer
+
+from src.backend_src.services.chat import LocalRateLimitError, get_answer
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +36,9 @@ def chat_answer(request: ChatHistoryRequest):
         if not result:
             raise ValueError("No response from crew")
 
-        # Convert result to dict
         if isinstance(result, dict):
             response_data = result
         else:
-            # CrewOutput or Pydantic model
             for method in ("to_dict", "model_dump", "dict"):
                 if hasattr(result, method):
                     response_data = getattr(result, method)()
@@ -46,7 +46,6 @@ def chat_answer(request: ChatHistoryRequest):
             else:
                 response_data = {"answer": str(result), "sources": [], "tool_used": "N/A", "rationale": "N/A"}
 
-        # Normalize: map new FormattedResponse fields
         if "formatted_answer" in response_data:
             response_data["answer"] = response_data["formatted_answer"]
         elif "summary" in response_data and "answer" not in response_data:
@@ -55,7 +54,6 @@ def chat_answer(request: ChatHistoryRequest):
         if "original_sources" in response_data and "sources" not in response_data:
             response_data["sources"] = response_data["original_sources"]
 
-        # Ensure all required fields exist
         response_data.setdefault("answer", "Could not generate an answer. Please try again.")
         response_data.setdefault("sources", [])
         response_data.setdefault("tool_used", "RAG Pipeline")
@@ -70,7 +68,6 @@ def chat_answer(request: ChatHistoryRequest):
         msg = str(e)
         retry_after = None
         try:
-            import re
             m = re.search(r"Please try again in ([0-9]+(?:\.[0-9]+)?)s", msg)
             if m:
                 retry_after = float(m.group(1))

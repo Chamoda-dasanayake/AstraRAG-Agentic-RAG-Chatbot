@@ -67,7 +67,7 @@ Instead of relying only on pre-trained knowledge, AstraRAG:
 | FastAPI | Backend API |
 | CrewAI | AI Agent orchestration |
 | ChromaDB | Vector database |
-| OpenAI | Language model |
+| OpenAI / Google Gemini | LLM (via `.env`) |
 | BAAI/bge-small-en-v1.5 | Embedding model |
 
 ---
@@ -84,3 +84,36 @@ Step-by-step **Render (API) + Streamlit Cloud (UI)** is in **[DEPLOY.md](DEPLOY.
 ```bash
 git clone https://github.com/Chamoda-dasanayake/AstraRAG-Agentic-RAG-Chatbot.git
 cd AstraRAG-Agentic-RAG-Chatbot
+```
+
+### 2️⃣ Environment
+Copy `.env.example` to `.env`. Set **`OPENAI_API_KEY`** for OpenAI models (`MODEL_NAME=gpt-4o-mini`), or **`GOOGLE_API_KEY`** plus a Gemini **`MODEL_NAME`** (see `.env.example`).
+
+### 3️⃣ Install and run
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+**API** (terminal 1): `python -m src.backend_src.main`  
+**UI** (terminal 2): `streamlit run src/frontend_src/app.py`
+
+Point `API_BASE_URL` / `CHAT_ENDPOINT_URL` in `.env` at the API (defaults: `http://localhost:8001`).
+
+### 4️⃣ Smoke test
+`GET http://localhost:8001/health` should return `{"status":"healthy",...}`.
+
+---
+
+## 📁 Repository layout (short)
+
+| Path | Purpose |
+|------|---------|
+| `src/backend_src/` | FastAPI app, document + chat services |
+| `src/agents_src/` | CrewAI agents, tasks, tools, settings |
+| `src/frontend_src/` | Streamlit UI |
+| `src/rag_doc_ingestion/` | Optional CLI ingestion |
+| `DEPLOY.md` | Production deploy steps |
+
+---

@@ -141,8 +141,6 @@ hr{border:none;border-top:1px solid var(--brd);margin:1rem 0}
 }
 </style>""", unsafe_allow_html=True)
 
-
-# ═══════════════════ SIDEBAR ═══════════════════
 with st.sidebar:
     st.markdown("""
         <div style="text-align:center;padding:.5rem 0 1.2rem">
@@ -235,8 +233,6 @@ with st.sidebar:
     st.markdown("---")
     st.markdown('<div style="text-align:center;padding:.5rem 0"><div style="font-size:.63rem;color:#475569;line-height:1.6">Powered by <strong style="color:#818cf8">CrewAI</strong> · <strong style="color:#818cf8">ChromaDB</strong> · <strong style="color:#818cf8">OpenAI</strong><br>Multi-Agent RAG Pipeline v3.0 · 4 Agents</div></div>', unsafe_allow_html=True)
 
-
-# ═══════════════════ MAIN CHAT ═══════════════════
 st.markdown("""
 <div style="padding:1.2rem 0 .6rem">
     <div class="brand-badge">🔮 Multi-Agent RAG System</div>
@@ -272,14 +268,12 @@ for msg_idx, msg in enumerate(st.session_state.chat_history):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         if msg.get("role") == "assistant":
-            # Confidence badge
             conf = msg.get("confidence_level", "N/A")
             if conf and conf != "N/A":
                 conf_class = {"High": "conf-high", "Medium": "conf-medium", "Low": "conf-low"}.get(conf, "conf-medium")
                 conf_icon = {"High": "🟢", "Medium": "🟡", "Low": "🔴"}.get(conf, "⚪")
                 st.markdown(f'<div class="conf-badge {conf_class}">{conf_icon} Confidence: {conf}</div>', unsafe_allow_html=True)
 
-            # Sources
             srcs = msg.get("sources", [])
             tool = msg.get("tool_used")
             rat = msg.get("rationale")
@@ -287,7 +281,6 @@ for msg_idx, msg in enumerate(st.session_state.chat_history):
                 chips = "".join(f'<span class="src-chip">📎 {s}</span>' for s in srcs)
                 st.markdown(f'<div style="margin-top:10px"><div style="font-size:.68rem;color:#64748b;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Sources Referenced</div>{chips}</div>', unsafe_allow_html=True)
 
-            # Follow-up suggestions
             suggestions = msg.get("follow_up_suggestions", [])
             if suggestions:
                 st.markdown(

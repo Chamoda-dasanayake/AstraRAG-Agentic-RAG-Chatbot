@@ -14,14 +14,14 @@ _GLOBAL_INDEX = None
 
 
 def reset_index():
-    """Reset the cached index so it gets rebuilt on next query."""
+    """Clear cached VectorStoreIndex."""
     global _GLOBAL_INDEX
     _GLOBAL_INDEX = None
     logger.info("RAG index cache invalidated.")
 
 
 def get_index():
-    """Initialize the LlamaIndex VectorStoreIndex (cached globally)."""
+    """Build or return cached LlamaIndex over Chroma."""
     global _GLOBAL_INDEX
     if _GLOBAL_INDEX is not None:
         return _GLOBAL_INDEX
@@ -60,11 +60,7 @@ def get_index():
 
 
 def retrieve_context(query: str, top_k: int = 3) -> str:
-    """
-    Directly query the vector store and return retrieved context as a string.
-    This is called from the service layer BEFORE the crew runs, so retrieval
-    is guaranteed regardless of agent behavior.
-    """
+    """Run similarity search over the index; used before the crew."""
     index = get_index()
     if index is None:
         return "[ERROR: Knowledge base unavailable. No documents indexed yet.]"
@@ -83,7 +79,8 @@ def retrieve_context(query: str, top_k: int = 3) -> str:
                 src = node.metadata.get("source", node.metadata.get("file_name", "Unknown"))
                 score = getattr(node, "score", None)
                 chunk_text = node.text[:300] if node.text else ""
-                sources.append(f"Source: {src} (score: {score:.3f})\n{chunk_text}")
+                score_str = f"{score:.3f}" if score is not None else "n/a"
+                sources.append(f"Source: {src} (score: {score_str})\n{chunk_text}")
 
         if sources:
             answer_text += "\n\n--- Retrieved Chunks ---\n" + "\n\n".join(sources)

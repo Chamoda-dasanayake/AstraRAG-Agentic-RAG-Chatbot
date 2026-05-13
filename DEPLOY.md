@@ -24,8 +24,9 @@ This project has **two parts**: a **FastAPI backend** (RAG + agents) and a **Str
    - **Start command**: `uvicorn src.backend_src.main:app --host 0.0.0.0 --port $PORT`
    - **Instance type**: Free is OK for testing (cold starts are slow; ML deps may need a paid plan for stability).
 4. Open **Environment** and add:
-   - `OPENAI_API_KEY` = your OpenAI key (required)
-   - Optional: `MODEL_NAME` (default `gpt-4o-mini`), `MODEL_TEMPERATURE`, `VECTOR_STORE_DIR`, `COLLECTION_NAME`
+   - `OPENAI_API_KEY` — required for OpenAI models (e.g. `gpt-4o-mini`)
+   - Or for **Gemini**: `GOOGLE_API_KEY` and `MODEL_NAME` (e.g. `gemini/gemini-2.0-flash`) instead of relying on `OPENAI_API_KEY`
+   - Optional: `MODEL_NAME`, `MODEL_TEMPERATURE`, `VECTOR_STORE_DIR`, `COLLECTION_NAME`
    - Optional: `CORS_ORIGINS` = `*` for quick demos, or your Streamlit URL once you know it (comma-separated list)
 5. **Create Web Service** and wait for the first deploy to finish.
 6. Copy your public URL, e.g. `https://astrarag-api.onrender.com`

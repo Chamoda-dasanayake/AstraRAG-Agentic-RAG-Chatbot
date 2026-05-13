@@ -1,22 +1,21 @@
 import logging
-import time
 import random
+import re
+import time
 from typing import List
 
 from openai import RateLimitError
 
+from src.agents_src.crew import qa_crew
 from src.agents_src.tools.rag_qa_tool import retrieve_context
+
+logger = logging.getLogger(__name__)
 
 
 class LocalRateLimitError(Exception):
     def __init__(self, message: str, retry_after: float | None = None):
         super().__init__(message)
         self.retry_after = retry_after
-
-
-from src.agents_src.crew import qa_crew
-
-logger = logging.getLogger(__name__)
 
 
 CASUAL_PATTERNS = {
@@ -55,7 +54,6 @@ def get_answer(chat_history: List[dict]) -> dict:
     user_query = last_user_message["content"]
     logger.info(f"Extracted user_query (len={len(user_query)}): {user_query[:120]}")
 
-    # Handle casual messages without invoking the RAG pipeline
     if _is_casual_message(user_query):
         logger.info("Casual message detected, skipping RAG pipeline")
         return {
@@ -65,14 +63,11 @@ def get_answer(chat_history: List[dict]) -> dict:
             "rationale": "Casual greeting detected — no document lookup needed.",
         }
 
-    # ── STEP 1: Retrieve context DIRECTLY (guaranteed, not dependent on agent) ──
     logger.info("Retrieving context from vector store...")
     retrieved_context = retrieve_context(user_query, top_k=3)
     logger.info(f"Retrieved context length: {len(retrieved_context)} chars")
 
     history_without_last = chat_history[:-1]
-
-    # Configure retry/backoff
     max_attempts = 6
     base_delay = 1.0
 
@@ -96,7 +91,6 @@ def get_answer(chat_history: List[dict]) -> dict:
             msg = str(e)
             retry_after = None
             try:
-                import re
                 m = re.search(r"Please try again in ([0-9]+(?:\.[0-9]+)?)s", msg)
                 if m:
                     retry_after = float(m.group(1))

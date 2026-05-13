@@ -22,7 +22,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS: set CORS_ORIGINS=https://your-app.streamlit.app (comma-separated). Use * only for quick demos.
+# CORS_ORIGINS: comma-separated origins, or * for demos only.
 _cors = os.getenv("CORS_ORIGINS", "*").strip()
 _cors_list = [o.strip() for o in _cors.split(",") if o.strip()] or ["*"]
 _allow_cred = "*" not in _cors_list
@@ -39,7 +39,7 @@ app.include_router(documents_router)
 
 @app.get("/health")
 def health_check():
-    """Health check endpoint"""
+    """Service liveness."""
     return {"status": "healthy", "service": "AstraRAG API"}
 
 settings = Settings()
@@ -47,7 +47,6 @@ settings = Settings()
 if __name__ == "__main__":
     import uvicorn
 
-    # Render / Railway / Fly set PORT; local dev uses API_PORT from .env
     port = int(os.environ.get("PORT", str(settings.API_PORT)))
     host = os.environ.get("API_HOST", settings.API_HOST)
     uvicorn.run(app, host=host, port=port, log_level="info")

@@ -7,6 +7,7 @@ import chromadb
 from llama_index.core import VectorStoreIndex, StorageContext
 from llama_index.core.node_parser import SimpleNodeParser
 from llama_index.core.readers import SimpleDirectoryReader
+from llama_index.core.schema import Document
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from pypdf import PdfReader
@@ -30,7 +31,6 @@ class PDFProcessor:
         self._init_chroma_db()
 
     def _init_chroma_db(self):
-        """Initialize ChromaDB connection"""
         try:
             self.db = chromadb.PersistentClient(path=self.vector_store_path)
             self.chroma_collection = self.db.get_or_create_collection(
@@ -42,23 +42,13 @@ class PDFProcessor:
             raise
 
     def process_pdf(self, file_path: str, document_name: str = None) -> dict:
-        """
-        Process a PDF file and add it to the vector store.
-
-        Args:
-            file_path: Path to the PDF file
-            document_name: Optional name for the document (for metadata)
-
-        Returns:
-            dict with processing results
-        """
+        """Parse PDF, chunk, embed, and upsert into Chroma."""
         try:
             if document_name is None:
                 document_name = Path(file_path).stem
 
             logger.info(f"Processing PDF: {file_path}")
 
-            # Extract text from PDF
             pdf_text = self._extract_text_from_pdf(file_path)
             
             if not pdf_text.strip():
@@ -69,20 +59,16 @@ class PDFProcessor:
                     "document_name": document_name
                 }
 
-            # Create nodes from text
             parser = SimpleNodeParser.from_defaults(
                 chunk_size=1024, 
                 chunk_overlap=50
             )
             
-            # Create a simple document-like object
-            from llama_index.core.schema import Document
             doc = Document(text=pdf_text, metadata={"source": document_name})
             nodes = parser.get_nodes_from_documents([doc])
             
             logger.info(f"Created {len(nodes)} nodes from {document_name}")
 
-            # Add to vector store
             vector_store = ChromaVectorStore(chroma_collection=self.chroma_collection)
             storage_context = StorageContext.from_defaults(vector_store=vector_store)
             
@@ -95,7 +81,6 @@ class PDFProcessor:
 
             logger.info(f"Successfully indexed PDF: {document_name}")
 
-            # Invalidate the cached RAG index so the next query sees new data
             reset_index()
             logger.info("RAG index cache invalidated after new upload.")
             
@@ -115,24 +100,10 @@ class PDFProcessor:
                 "document_name": document_name
             }
 
-    def process_pdf_bytes(
-        self, 
-        pdf_bytes: bytes, 
-        document_name: str
-    ) -> dict:
-        """
-        Process PDF from bytes (for uploaded files).
-
-        Args:
-            pdf_bytes: PDF file content as bytes
-            document_name: Name for the document
-
-        Returns:
-            dict with processing results
-        """
+    def process_pdf_bytes(self, pdf_bytes: bytes, document_name: str) -> dict:
+        """Process in-memory PDF bytes via a temp file."""
         temp_file = None
         try:
-            # Write bytes to temporary file
             with tempfile.NamedTemporaryFile(
                 suffix=".pdf",
                 delete=False
@@ -140,7 +111,6 @@ class PDFProcessor:
                 temp.write(pdf_bytes)
                 temp_file = temp.name
 
-            # Process the temporary file
             return self.process_pdf(temp_file, document_name)
 
         except Exception as e:
@@ -151,7 +121,6 @@ class PDFProcessor:
                 "document_name": document_name
             }
         finally:
-            # Clean up temporary file
             if temp_file and Path(temp_file).exists():
                 try:
                     Path(temp_file).unlink()
@@ -160,15 +129,7 @@ class PDFProcessor:
 
     @staticmethod
     def _extract_text_from_pdf(file_path: str) -> str:
-        """
-        Extract text from a PDF file.
-
-        Args:
-            file_path: Path to the PDF file
-
-        Returns:
-            Extracted text
-        """
+        """Extract plain text from a PDF path."""
         try:
             text = []
             with open(file_path, "rb") as pdf_file:
@@ -188,14 +149,8 @@ class PDFProcessor:
             raise
 
     def get_uploaded_documents(self) -> List[str]:
-        """
-        Get list of all documents in the vector store.
-
-        Returns:
-            List of document names
-        """
+        """Distinct document names from Chroma metadata."""
         try:
-            # Query the collection to get metadata
             results = self.chroma_collection.get()
             documents = set()
             
@@ -211,15 +166,7 @@ class PDFProcessor:
             return []
 
     def delete_document(self, document_name: str) -> dict:
-        """
-        Delete all vectors for a document by its source metadata.
-
-        Args:
-            document_name: Original uploaded PDF name stored as metadata["source"]
-
-        Returns:
-            dict with deletion status and count
-        """
+        """Delete vectors whose metadata matches the given filename."""
         try:
             target_name = (document_name or "").strip()
             if not target_name:
@@ -230,8 +177,6 @@ class PDFProcessor:
                     "document_name": document_name,
                 }
 
-            # Use full metadata scan + id deletion as a robust fallback.
-            # Different ingestion paths may store name under `source` or `file_name`.
             existing = self.chroma_collection.get(include=["metadatas"])
             ids = existing.get("ids", []) if existing else []
             metadatas = existing.get("metadatas", []) if existing else []
