@@ -8,7 +8,7 @@ response_formatter_agent = Agent(
     role="Senior Conversational UX Specialist",
     llm=LLM(
         model=_settings.crewai_openai_model(),
-        api_key=_settings.OPENAI_API_KEY,
+        api_key=_settings.llm_api_key(),
         temperature=0.3,
     ),
     goal=(

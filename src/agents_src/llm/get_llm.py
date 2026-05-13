@@ -8,6 +8,6 @@ def get_llm_for_agent(agent_name: str) -> LLM:
     temp = settings.MODEL_TEMPERATURE if settings.MODEL_TEMPERATURE is not None else 0.1
     return LLM(
         model=settings.crewai_openai_model(),
-        api_key=settings.OPENAI_API_KEY,
+        api_key=settings.llm_api_key(),
         temperature=temp,
     )

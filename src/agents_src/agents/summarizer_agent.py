@@ -9,7 +9,7 @@ summarizer_agent = Agent(
     role="Summarizer Agent",
     llm=LLM(
         model=_settings.crewai_openai_model(),
-        api_key=_settings.OPENAI_API_KEY,
+        api_key=_settings.llm_api_key(),
         temperature=0.1,
     ),
     goal="Condense and refine answers into clear, concise summaries with key takeaways, "

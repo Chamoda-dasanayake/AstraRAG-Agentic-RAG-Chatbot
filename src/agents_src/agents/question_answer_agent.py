@@ -9,7 +9,7 @@ qa_agent = Agent(
     role="Question Answer Agent",
     llm=LLM(
         model=_settings.crewai_openai_model(),
-        api_key=_settings.OPENAI_API_KEY,
+        api_key=_settings.llm_api_key(),
         temperature=0.1,
     ),
     tools=[rag_query_tool],

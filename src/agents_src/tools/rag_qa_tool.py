@@ -30,11 +30,20 @@ def get_index():
         settings = AgentSettings()
 
         temp = settings.MODEL_TEMPERATURE if settings.MODEL_TEMPERATURE is not None else 0.1
-        Settings.llm = OpenAI(
-            api_key=settings.OPENAI_API_KEY,
-            model=settings.llamaindex_openai_model(),
-            temperature=temp,
-        )
+        if settings.uses_gemini():
+            from llama_index.llms.google_genai import GoogleGenAI
+
+            Settings.llm = GoogleGenAI(
+                model=settings.google_genai_model_id(),
+                api_key=settings.llm_api_key(),
+                temperature=temp,
+            )
+        else:
+            Settings.llm = OpenAI(
+                api_key=settings.llm_api_key(),
+                model=settings.llamaindex_openai_model(),
+                temperature=temp,
+            )
         Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
         db = chromadb.PersistentClient(path=settings.VECTOR_STORE_DIR)

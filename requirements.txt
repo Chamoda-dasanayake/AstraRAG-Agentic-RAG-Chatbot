@@ -13,6 +13,7 @@ sentence-transformers>=2.2.2,<3.0.0
 # crewai needs tokenizers>=0.21; transformers<4.47 pins tokenizers<0.20 — use 4.47+.
 transformers>=4.47.0,<5.0.0
 llama-index-vector-stores-chroma==0.5.3
+llama-index-llms-google-genai>=0.9.0,<0.10.0
 
 chromadb~=1.1.0
 python-multipart>=0.0.9,<1.0
