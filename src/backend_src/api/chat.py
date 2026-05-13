@@ -1,6 +1,6 @@
 import logging
 from fastapi import APIRouter, HTTPException
-from litellm.exceptions import RateLimitError
+from openai import RateLimitError
 from src.backend_src.services.chat import LocalRateLimitError
 from pydantic import BaseModel
 from typing import List

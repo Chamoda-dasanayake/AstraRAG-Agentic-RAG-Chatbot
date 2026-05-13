@@ -3,7 +3,7 @@ import time
 import random
 from typing import List
 
-from litellm.exceptions import RateLimitError
+from openai import RateLimitError
 
 from src.agents_src.tools.rag_qa_tool import retrieve_context
 
