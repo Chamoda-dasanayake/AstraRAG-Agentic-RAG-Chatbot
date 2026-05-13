@@ -6,9 +6,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 from src.frontend_src.config.frontend_settings import Settings
 settings = Settings()
 
-st.set_page_config(page_title="AstraRAG — Document Intelligence", page_icon="🔮", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="AstraRAG Document Intelligence", page_icon="🔮", layout="wide", initial_sidebar_state="expanded")
 
-# ═══════════════════ PREMIUM CSS ═══════════════════
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
@@ -102,8 +101,44 @@ div[data-testid="chatAvatarIcon-assistant"]{background:linear-gradient(135deg,#a
 .upload-ok{display:flex;align-items:center;gap:8px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:10px 16px;font-size:.8rem;color:var(--green);font-weight:500;animation:slideUp .3s ease}
 
 hr{border:none;border-top:1px solid var(--brd);margin:1rem 0}
-#MainMenu,footer,header{visibility:hidden}
+#MainMenu,footer{visibility:hidden}
 .stAlert{border-radius:8px!important;font-size:.83rem!important}
+
+/* ─── Mobile / responsive ─── */
+@media (max-width:768px){
+  html{-webkit-text-size-adjust:100%}
+  .brand-title{font-size:1.65rem!important;line-height:1.2!important}
+  .brand-sub{font-size:.875rem!important;margin-bottom:1rem!important}
+  .brand-badge{font-size:.62rem!important;padding:3px 10px!important}
+  .welcome{padding:1.25rem 1rem!important;margin:1rem .25rem!important;max-width:100%!important}
+  .w-icon{font-size:2.25rem!important}
+  .w-title{font-size:1.08rem!important}
+  .w-text{font-size:.82rem!important}
+  .feat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .feat-item{padding:12px 8px!important}
+  .feat-ico{font-size:1.15rem!important}
+  .feat-lbl{font-size:.65rem!important}
+  .stat-row{flex-wrap:wrap;gap:8px}
+  .stat-card{min-width:calc(50% - 6px);padding:10px 8px!important}
+  .stat-val{font-size:1.1rem!important}
+  .doc-item{padding:9px 12px!important}
+  .doc-name{white-space:normal!important;word-break:break-word!important;font-size:.78rem!important}
+  [data-testid="stChatMessage"]{padding:.85rem 1rem!important;margin-bottom:.55rem!important;border-radius:14px!important}
+  [data-testid="stChatInput"] textarea{font-size:16px!important}
+  .stButton>button{min-height:44px!important;padding:.65rem 1rem!important;font-size:.82rem!important}
+  section[data-testid="stSidebar"]{width:min(100vw - 8px,320px)!important}
+}
+@media (max-width:480px){
+  .brand-title{font-size:1.38rem!important}
+  .welcome{padding:1rem .75rem!important}
+  .feat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .stat-card{flex:1 1 100%;min-width:100%}
+  .src-chip{font-size:.68rem!important;padding:4px 9px!important;word-break:break-word;white-space:normal}
+  .conf-badge{font-size:.63rem!important;padding:5px 10px!important}
+}
+@media (max-width:768px){
+  .main .block-container{padding-left:max(.75rem, env(safe-area-inset-left))!important;padding-right:max(.75rem, env(safe-area-inset-right))!important;padding-top:.75rem!important;max-width:100%!important}
+}
 </style>""", unsafe_allow_html=True)
 
 
@@ -160,9 +195,37 @@ with st.sidebar:
     st.markdown(f'<div class="stat-row"><div class="stat-card"><div class="stat-val">{len(docs)}</div><div class="stat-lbl">Documents</div></div><div class="stat-card"><div class="stat-val">4</div><div class="stat-lbl">AI Agents</div></div></div>', unsafe_allow_html=True)
 
     if docs:
-        for doc in docs:
+        for doc_idx, doc in enumerate(docs):
             dn = doc if len(doc) <= 30 else doc[:27] + "..."
-            st.markdown(f'<div class="doc-item"><div class="doc-icon">📄</div><div class="doc-name" title="{doc}">{dn}</div></div>', unsafe_allow_html=True)
+            left_col, right_col = st.columns([0.8, 0.2])
+            with left_col:
+                st.markdown(
+                    f'<div class="doc-item"><div class="doc-icon">📄</div><div class="doc-name" title="{doc}">{dn}</div></div>',
+                    unsafe_allow_html=True
+                )
+            with right_col:
+                if st.button("🗑️", key=f"delete_doc_{doc_idx}", help=f"Remove {doc}"):
+                    try:
+                        del_resp = requests.delete(
+                            f"{settings.API_BASE_URL}/documents/delete",
+                            params={"document_name": doc},
+                            timeout=30
+                        )
+                        if del_resp.status_code == 200:
+                            st.success(f"Removed: {dn}")
+                            time.sleep(0.6)
+                            st.rerun()
+                        else:
+                            msg = "Delete failed"
+                            try:
+                                msg = del_resp.json().get("detail", msg)
+                            except Exception:
+                                pass
+                            st.error(f"❌ {msg}")
+                    except requests.ConnectionError:
+                        st.error("⚠️ Backend offline — start the API server first.")
+                    except Exception as e:
+                        st.error(f"⚠️ {e}")
     else:
         st.caption("No documents indexed yet.")
 
@@ -183,6 +246,8 @@ st.markdown("""
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+if "selected_followup_prompt" not in st.session_state:
+    st.session_state.selected_followup_prompt = None
 
 _, cc = st.columns([.88, .12])
 with cc:
@@ -203,7 +268,7 @@ if not st.session_state.chat_history:
         </div>
     </div>""", unsafe_allow_html=True)
 
-for msg in st.session_state.chat_history:
+for msg_idx, msg in enumerate(st.session_state.chat_history):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         if msg.get("role") == "assistant":
@@ -225,8 +290,18 @@ for msg in st.session_state.chat_history:
             # Follow-up suggestions
             suggestions = msg.get("follow_up_suggestions", [])
             if suggestions:
-                followup_chips = "".join(f'<span class="followup-chip">💡 {s}</span>' for s in suggestions)
-                st.markdown(f'<div style="margin-top:10px"><div style="font-size:.68rem;color:#64748b;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Try Asking</div><div class="followup-row">{followup_chips}</div></div>', unsafe_allow_html=True)
+                st.markdown(
+                    '<div style="margin-top:10px;font-size:.68rem;color:#64748b;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Try Asking</div>',
+                    unsafe_allow_html=True
+                )
+                for s_idx, suggestion in enumerate(suggestions):
+                    if st.button(
+                        f"💡 {suggestion}",
+                        key=f"followup_{msg_idx}_{s_idx}",
+                        use_container_width=True
+                    ):
+                        st.session_state.selected_followup_prompt = suggestion
+                        st.rerun()
 
             if rat and rat != "N/A":
                 with st.expander("🔍 Auditor Insights & Reasoning"):
@@ -234,8 +309,11 @@ for msg in st.session_state.chat_history:
                         st.markdown(f'<div class="ins-panel"><div class="ins-lbl">Agent Pipeline</div><div class="ins-val">{tool}</div></div>', unsafe_allow_html=True)
                     st.markdown(f'<div class="ins-panel"><div class="ins-lbl">Fact-Check Rationale</div><div class="ins-val">{rat}</div></div>', unsafe_allow_html=True)
 
-prompt = st.chat_input("Ask a question about your documents...")
+prompt_from_input = st.chat_input("Ask a question about your documents...")
+prompt = st.session_state.selected_followup_prompt or prompt_from_input
 if prompt:
+    if st.session_state.selected_followup_prompt:
+        st.session_state.selected_followup_prompt = None
     st.chat_message("user").markdown(prompt)
     st.session_state.chat_history.append({"role": "user", "content": prompt})
 

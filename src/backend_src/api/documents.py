@@ -88,3 +88,34 @@ def list_documents():
             status_code=500,
             detail="Error retrieving document list"
         )
+
+
+@router.delete("/delete")
+def delete_document(document_name: str):
+    """
+    Delete an indexed document by its name.
+
+    Args:
+        document_name: Uploaded document filename
+
+    Returns:
+        dict with deletion result
+    """
+    if not document_name or not document_name.strip():
+        raise HTTPException(status_code=400, detail="document_name is required")
+
+    try:
+        result = pdf_processor.delete_document(document_name.strip())
+        if not result.get("success"):
+            raise HTTPException(status_code=404, detail=result.get("message", "Document not found"))
+        return {
+            "status": "success",
+            "message": result["message"],
+            "document_name": result["document_name"],
+            "deleted_count": result["deleted_count"],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting document '{document_name}': {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error deleting document: {str(e)}")

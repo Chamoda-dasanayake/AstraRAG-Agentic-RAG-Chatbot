@@ -209,3 +209,75 @@ class PDFProcessor:
         except Exception as e:
             logger.error(f"Error getting uploaded documents: {e}")
             return []
+
+    def delete_document(self, document_name: str) -> dict:
+        """
+        Delete all vectors for a document by its source metadata.
+
+        Args:
+            document_name: Original uploaded PDF name stored as metadata["source"]
+
+        Returns:
+            dict with deletion status and count
+        """
+        try:
+            target_name = (document_name or "").strip()
+            if not target_name:
+                return {
+                    "success": False,
+                    "message": "Document name cannot be empty.",
+                    "deleted_count": 0,
+                    "document_name": document_name,
+                }
+
+            # Use full metadata scan + id deletion as a robust fallback.
+            # Different ingestion paths may store name under `source` or `file_name`.
+            existing = self.chroma_collection.get(include=["metadatas"])
+            ids = existing.get("ids", []) if existing else []
+            metadatas = existing.get("metadatas", []) if existing else []
+
+            target_lower = target_name.lower()
+            matched_ids = []
+            for item_id, metadata in zip(ids, metadatas):
+                if not metadata:
+                    continue
+                source_val = str(metadata.get("source", "")).strip()
+                file_name_val = str(metadata.get("file_name", "")).strip()
+
+                candidates = {
+                    source_val.lower(),
+                    file_name_val.lower(),
+                    Path(source_val).name.lower(),
+                    Path(file_name_val).name.lower(),
+                }
+                candidates.discard("")
+
+                if target_lower in candidates or Path(target_name).name.lower() in candidates:
+                    matched_ids.append(item_id)
+
+            if not matched_ids:
+                return {
+                    "success": False,
+                    "message": f"Document '{target_name}' was not found in the index.",
+                    "deleted_count": 0,
+                    "document_name": target_name,
+                }
+
+            self.chroma_collection.delete(ids=matched_ids)
+            reset_index()
+            logger.info(f"Deleted {len(matched_ids)} vectors for document '{target_name}'")
+
+            return {
+                "success": True,
+                "message": f"Document '{target_name}' removed successfully.",
+                "deleted_count": len(matched_ids),
+                "document_name": target_name,
+            }
+        except Exception as e:
+            logger.error(f"Error deleting document '{document_name}': {e}", exc_info=True)
+            return {
+                "success": False,
+                "message": f"Error deleting document: {str(e)}",
+                "deleted_count": 0,
+                "document_name": document_name,
+            }
