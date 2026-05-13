@@ -166,9 +166,6 @@ AstraRAG-Agentic-RAG-Chatbot/
 │
 ├── doc_vector_store/                  # 💾 Persistent ChromaDB storage
 ├── docs_dir/                          # 📄 Uploaded document storage
-├── deploy/                            # 🚀 Deployment configuration
-├── Dockerfile                         # 🐳 Container setup
-├── render.yaml                        # ☁️ Render deployment config
 ├── requirements.txt                   # 📦 Python dependencies
 └── README.md
 ```
@@ -286,23 +283,6 @@ Open **http://localhost:8501** → Upload a PDF → Start asking questions!
 
 ---
 
-## ☁️ Deployment
-
-### Docker
-
-```bash
-docker build -t astrarag .
-docker run -p 8001:8001 --env-file .env astrarag
-```
-
-### Render (Production)
-
-Step-by-step deployment guide for **Render (API) + Streamlit Cloud (UI)** is available in **[DEPLOY.md](DEPLOY.md)**.
-
-Pre-configured `render.yaml` and `Procfile` are included for one-click deployment.
-
----
-
 ## 🏗️ Engineering Highlights
 
 | Skill Area | Demonstrated In |
@@ -312,7 +292,7 @@ Pre-configured `render.yaml` and `Procfile` are included for one-click deploymen
 | **Prompt Engineering** | Carefully crafted agent roles, goals, and backstories for optimal LLM behavior |
 | **API Design** | RESTful FastAPI with document CRUD, chat endpoints, and health monitoring |
 | **System Design** | Modular architecture — agents, tasks, tools, and services are independently testable |
-| **DevOps** | Docker containerization, Render deployment config, environment management |
+
 | **Frontend Engineering** | Custom-themed Streamlit with responsive CSS, animations, and real-time status |
 | **AI/ML Integration** | HuggingFace embeddings, configurable LLM backends (Gemini/OpenAI), vector databases |
 
@@ -325,7 +305,7 @@ Pre-configured `render.yaml` and `Procfile` are included for one-click deploymen
 - [x] Confidence indicators and follow-up suggestions
 - [x] Document management (upload, list, delete)
 - [x] Responsive mobile UI with dark theme
-- [x] Docker + Render deployment
+- [ ] Docker containerization & cloud deployment
 - [ ] Conversation memory (multi-turn context)
 - [ ] Multi-document cross-referencing
 - [ ] Agent performance analytics dashboard
