@@ -29,7 +29,7 @@
 Traditional chatbots generate **hallucinated** or **inaccurate** responses due to:
 - Limited context awareness and no access to private domain knowledge
 - Static RAG pipelines that lack multi-step reasoning capabilities
-- No verification layer — answers go unchecked before reaching the user
+- No verification layer - answers go unchecked before reaching the user
 - Robotic, unformatted outputs that provide poor user experience
 
 ## 💡 Solution
@@ -40,7 +40,7 @@ AstraRAG solves these challenges with a **4-agent orchestrated pipeline** that r
 📄 Upload PDF → 🧩 Chunk & Embed → 🔍 Semantic Search → 🤖 4-Agent Pipeline → ✅ Verified Answer
 ```
 
-Each agent has a distinct role, clear goal, and specialized behavior — mimicking how a real-world expert team operates on a knowledge task.
+Each agent has a distinct role, clear goal, and specialized behavior - mimicking how a real-world expert team operates on a knowledge task.
 
 ---
 
@@ -78,36 +78,36 @@ graph LR
 | One model does everything — retrieval, reasoning, formatting | Each agent specializes in one task → **higher accuracy** |
 | No verification — hallucinations pass through | Dedicated Fact-Checker agent catches hallucinations |
 | Raw, unformatted output | UX Specialist formats responses conversationally |
-| Fixed behavior, hard to extend | Modular — add/remove/swap agents independently |
+| Fixed behavior, hard to extend | Modular - add/remove/swap agents independently |
 
 ---
 
 ## ✨ Key Features
 
 ### Intelligent Document Processing
-- **PDF Upload & Ingestion** — Automatic chunking, embedding, and vector indexing
-- **Semantic Search** — Similarity-based retrieval via ChromaDB vector store
-- **Source Attribution** — Every answer cites the exact documents used
+- **PDF Upload & Ingestion** - Automatic chunking, embedding, and vector indexing
+- **Semantic Search** - Similarity-based retrieval via ChromaDB vector store
+- **Source Attribution** - Every answer cites the exact documents used
 
 ### Multi-Agent Reasoning
-- **4-Agent Pipeline** — Retrieval → Summarization → Fact-Checking → Formatting
-- **Hallucination Prevention** — Dedicated agent audits every claim against source material
-- **Autonomous Agent Execution** — Agents plan, reason, and act independently via CrewAI
-- **Configurable LLM Backend** — Supports both OpenAI GPT and Google Gemini models
+- **4-Agent Pipeline** - Retrieval → Summarization → Fact-Checking → Formatting
+- **Hallucination Prevention** - Dedicated agent audits every claim against source material
+- **Autonomous Agent Execution** - Agents plan, reason, and act independently via CrewAI
+- **Configurable LLM Backend** - Supports both OpenAI GPT and Google Gemini models
 
 ### User Experience
-- **Confidence Indicators** — 🟢 High / 🟡 Medium / 🔴 Low confidence badges
-- **Follow-Up Suggestions** — AI-generated topic-relevant follow-up questions as clickable chips
-- **Source Chips** — Referenced documents displayed as interactive badges
-- **Auditor Insights** — Expandable panel showing fact-check rationale and agent pipeline details
-- **Real-time Status** — Live system health monitoring (Online/Offline indicator)
-- **Responsive UI** — Mobile-optimized Streamlit interface with custom dark theme
+- **Confidence Indicators** - 🟢 High / 🟡 Medium / 🔴 Low confidence badges
+- **Follow-Up Suggestions** - AI-generated topic-relevant follow-up questions as clickable chips
+- **Source Chips** - Referenced documents displayed as interactive badges
+- **Auditor Insights** - Expandable panel showing fact-check rationale and agent pipeline details
+- **Real-time Status** - Live system health monitoring (Online/Offline indicator)
+- **Responsive UI** - Mobile-optimized Streamlit interface with custom dark theme
 
 ### Production-Ready Backend
-- **RESTful API** — FastAPI with health checks, document management, and chat endpoints
-- **Document Management** — Upload, list, and delete documents via API
-- **Persistent Vector Store** — ChromaDB with persistent storage for indexed documents
-- **Error Handling** — Graceful degradation with meaningful error messages
+- **RESTful API** - FastAPI with health checks, document management, and chat endpoints
+- **Document Management** - Upload, list, and delete documents via API
+- **Persistent Vector Store** - ChromaDB with persistent storage for indexed documents
+- **Error Handling** - Graceful degradation with meaningful error messages
 
 ---
 
