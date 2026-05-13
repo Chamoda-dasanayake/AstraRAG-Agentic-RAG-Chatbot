@@ -16,8 +16,6 @@ summarizer_task = Task(
     name="Summarization Task",
     description="""
     Take the output from the Question Answering Task and create a concise, refined summary.
-    
-    Original answer: "{qa_output}"
 
     Instructions:
     - Summarize the answer in 2-3 sentences maximum.

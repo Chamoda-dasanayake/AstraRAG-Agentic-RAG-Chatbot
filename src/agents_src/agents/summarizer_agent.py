@@ -1,15 +1,20 @@
 from crewai import Agent, LLM
 
-from src.agents_src.llm.get_llm import get_llm_for_agent
+from src.agents_src.config.agent_settings import AgentSettings
+from src.agents_src.tools.rag_qa_tool import rag_query_tool
 
-name = "Summarizer Agent"
-llm = get_llm_for_agent(name)
-
+_settings = AgentSettings()
 
 summarizer_agent = Agent(
     role="Summarizer Agent",
-    llm=llm,
-    goal="Condense and refine answers from the Question Answer Agent into clear, concise summaries with key takeaways, ensuring they remain accurate and evidence-based.",
-    backstory="You are an expert editor specializing in distilling complex information into digestible insights. You excel at highlighting essentials without losing context, making responses more user-friendly and actionable.",
+    llm=LLM(
+        model=_settings.crewai_openai_model(),
+        api_key=_settings.OPENAI_API_KEY,
+        temperature=0.1,
+    ),
+    goal="Condense and refine answers into clear, concise summaries with key takeaways, "
+         "ensuring they remain accurate and evidence-based.",
+    backstory="You are an expert editor specializing in distilling complex information "
+              "into digestible insights. You highlight essentials without losing context.",
     verbose=True,
 )

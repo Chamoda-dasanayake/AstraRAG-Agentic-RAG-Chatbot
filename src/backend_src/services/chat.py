@@ -5,26 +5,33 @@ from typing import List
 
 from litellm.exceptions import RateLimitError
 
+from src.agents_src.tools.rag_qa_tool import retrieve_context
 
-# Local exception to represent rate-limit exhaustion in our service layer
+
 class LocalRateLimitError(Exception):
     def __init__(self, message: str, retry_after: float | None = None):
         super().__init__(message)
         self.retry_after = retry_after
+
 
 from src.agents_src.crew import qa_crew
 
 logger = logging.getLogger(__name__)
 
 
-def _trim_history_for_attempt(history: List[dict], attempt: int) -> List[dict]:
-    """Progressively trim chat history on retries to reduce token usage.
+CASUAL_PATTERNS = {
+    "hi", "hello", "hey", "hii", "hiii", "howdy", "sup",
+    "thanks", "thank you", "thx", "bye", "goodbye", "see you",
+    "good morning", "good evening", "good night", "good afternoon",
+}
 
-    attempt=1 -> keep up to 12 messages
-    attempt=2 -> keep up to 8
-    attempt=3 -> keep up to 4
-    attempt>=4 -> keep last message only
-    """
+
+def _is_casual_message(text: str) -> bool:
+    cleaned = text.strip().lower().rstrip("!?.,")
+    return cleaned in CASUAL_PATTERNS
+
+
+def _trim_history_for_attempt(history: List[dict], attempt: int) -> List[dict]:
     if not history:
         return []
     if attempt == 1:
@@ -40,15 +47,29 @@ def _trim_history_for_attempt(history: List[dict], attempt: int) -> List[dict]:
 
 def get_answer(chat_history: List[dict]) -> dict:
     logger.info(f"Received chat_history with {len(chat_history)} messages")
-    
-    # get the last message in the chat_history as user_query
+
     if not chat_history:
         raise ValueError("chat_history is empty")
+
     last_user_message = chat_history[-1]
     user_query = last_user_message["content"]
     logger.info(f"Extracted user_query (len={len(user_query)}): {user_query[:120]}")
 
-    # Remove the last user message from chat_history
+    # Handle casual messages without invoking the RAG pipeline
+    if _is_casual_message(user_query):
+        logger.info("Casual message detected, skipping RAG pipeline")
+        return {
+            "answer": "Hi! 👋 I can help you understand your documents. Upload a PDF in the sidebar, then ask me anything about it!",
+            "sources": [],
+            "tool_used": "Greeting Handler",
+            "rationale": "Casual greeting detected — no document lookup needed.",
+        }
+
+    # ── STEP 1: Retrieve context DIRECTLY (guaranteed, not dependent on agent) ──
+    logger.info("Retrieving context from vector store...")
+    retrieved_context = retrieve_context(user_query, top_k=3)
+    logger.info(f"Retrieved context length: {len(retrieved_context)} chars")
+
     history_without_last = chat_history[:-1]
 
     # Configure retry/backoff
@@ -56,11 +77,11 @@ def get_answer(chat_history: List[dict]) -> dict:
     base_delay = 1.0
 
     for attempt in range(1, max_attempts + 1):
-        # progressively trim history to reduce prompt size on retries
         trimmed_history = _trim_history_for_attempt(history_without_last, attempt)
         input_data = {
             "user_query": user_query,
             "chat_history": trimmed_history,
+            "retrieved_context": retrieved_context,
         }
 
         logger.debug(f"Attempt {attempt}/{max_attempts}, trimmed_history len={len(trimmed_history)}")
@@ -68,15 +89,14 @@ def get_answer(chat_history: List[dict]) -> dict:
         try:
             result = qa_crew.kickoff(input_data)
             logger.info(f"Result from qa_crew: {result}")
+            logger.info(f"Result type: {type(result)}")
             return result
 
         except RateLimitError as e:
-            # Parse retry seconds from message if available, otherwise use exponential backoff with jitter
             msg = str(e)
             retry_after = None
             try:
                 import re
-
                 m = re.search(r"Please try again in ([0-9]+(?:\.[0-9]+)?)s", msg)
                 if m:
                     retry_after = float(m.group(1))
@@ -84,7 +104,6 @@ def get_answer(chat_history: List[dict]) -> dict:
                 retry_after = None
 
             if retry_after is None:
-                # exponential backoff plus small jitter
                 retry_after = base_delay * (2 ** (attempt - 1)) + random.uniform(0, 1)
 
             logger.warning(
@@ -95,9 +114,6 @@ def get_answer(chat_history: List[dict]) -> dict:
 
         except Exception as ex:
             logger.error(f"Error on attempt {attempt}/{max_attempts}: {type(ex).__name__}: {ex}", exc_info=True)
-            # Re-raise other exceptions for upstream handling
             raise
 
-    # If we exhausted retries, raise a local rate-limit error to be handled by caller
     raise LocalRateLimitError("Rate limit exceeded after retries; please try again later.")
-

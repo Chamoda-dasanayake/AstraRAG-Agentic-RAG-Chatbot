@@ -1,23 +1,24 @@
-from crewai import Agent,LLM
+from crewai import Agent, LLM
 
+from src.agents_src.config.agent_settings import AgentSettings
 from src.agents_src.tools.rag_qa_tool import rag_query_tool
-from src.agents_src.llm.get_llm import get_llm_for_agent
 
-name = "Question Answer Agent"
-llm = get_llm_for_agent(name)
-
+_settings = AgentSettings()
 
 qa_agent = Agent(
     role="Question Answer Agent",
-    llm=llm,
+    llm=LLM(
+        model=_settings.crewai_openai_model(),
+        api_key=_settings.OPENAI_API_KEY,
+        temperature=0.1,
+    ),
     tools=[rag_query_tool],
-    goal="Provide accurate, well-structured answers to user queries by retrieving relevant context from"
-        " connected documents, ensuring responses are grounded in evidence rather than speculation."
-        " The agent prioritizes clarity, factual accuracy, and relevance, presenting outputs in a user-friendly"
-        " format with supporting references when possible.",
-    backstory="You are a knowledge analyst who has spent years helping people find clarity in large"
-            " document collections. You specialize in surfacing the most relevant evidence and turning it into clear,"
-            " reliable answers. You value precision and transparency, always grounding responses in sources so"
-            " users can trust the insights you provide.",
+    goal="Answer user queries ONLY using the rag_query_tool to retrieve context from documents. "
+         "You MUST always call rag_query_tool first before writing any answer.",
+    backstory="You are a strict document analyst. You NEVER answer from memory. "
+              "You ALWAYS call rag_query_tool first to search the knowledge base, "
+              "then use ONLY the retrieved text to form your answer.",
     verbose=True,
+    max_iter=5,
+    max_retry_limit=2,
 )

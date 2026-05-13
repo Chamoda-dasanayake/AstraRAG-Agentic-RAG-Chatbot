@@ -1,78 +1,94 @@
 import logging
 import chromadb
-from crewai.tools import tool
-from llama_index.core import VectorStoreIndex, StorageContext, Settings
+from llama_index.core import VectorStoreIndex, Settings
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.llms.groq import Groq
+from llama_index.llms.openai import OpenAI
+from crewai.tools import tool
 
 from src.agents_src.config.agent_settings import AgentSettings
 
 logger = logging.getLogger(__name__)
 
-# Global variable to cache the index
 _GLOBAL_INDEX = None
 
+
+def reset_index():
+    """Reset the cached index so it gets rebuilt on next query."""
+    global _GLOBAL_INDEX
+    _GLOBAL_INDEX = None
+    logger.info("RAG index cache invalidated.")
+
+
 def get_index():
-    """Helper to initialize the index only once, safely."""
+    """Initialize the LlamaIndex VectorStoreIndex (cached globally)."""
     global _GLOBAL_INDEX
     if _GLOBAL_INDEX is not None:
         return _GLOBAL_INDEX
 
     try:
         settings = AgentSettings()
-        
-        # Configure LLM & Embeddings
-        Settings.llm = Groq(
-            model=settings.MODEL_NAME,
-            temperature=settings.MODEL_TEMPERATURE,
-            api_key=settings.GROQ_API_KEY,
+
+        temp = settings.MODEL_TEMPERATURE if settings.MODEL_TEMPERATURE is not None else 0.1
+        Settings.llm = OpenAI(
+            api_key=settings.OPENAI_API_KEY,
+            model=settings.llamaindex_openai_model(),
+            temperature=temp,
         )
         Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
-        # Setup Vector Store
         db = chromadb.PersistentClient(path=settings.VECTOR_STORE_DIR)
         chroma_collection = db.get_or_create_collection(settings.COLLECTION_NAME)
+
+        logger.info(f"ChromaDB collection '{settings.COLLECTION_NAME}' has {chroma_collection.count()} vectors")
+
         vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-        
         _GLOBAL_INDEX = VectorStoreIndex.from_vector_store(vector_store=vector_store)
         return _GLOBAL_INDEX
     except Exception as e:
-        logger.error(f"Failed to initialize RAG Index: {e}")
+        logger.error(f"Failed to initialize RAG Index: {e}", exc_info=True)
         return None
 
-@tool
-def rag_query_tool(query: str) -> str:
-    """Search the knowledge base for answers."""
-    
-    # 1. Basic input handling
-    query_text = query["value"] if isinstance(query, dict) and "value" in query else str(query)
 
-    # 2. Safety check for the index
+def retrieve_context(query: str, top_k: int = 3) -> str:
+    """
+    Directly query the vector store and return retrieved context as a string.
+    This is called from the service layer BEFORE the crew runs, so retrieval
+    is guaranteed regardless of agent behavior.
+    """
     index = get_index()
     if index is None:
-        return "Error: The knowledge base is currently unavailable. Please check backend logs."
+        return "[ERROR: Knowledge base unavailable. No documents indexed yet.]"
 
     try:
-        # 3. Query Execution (Keep top_k low for Groq Free Tier)
-        query_engine = index.as_query_engine(similarity_top_k=2)
-        response = query_engine.query(query_text)
-        
-        answer_text = str(response).strip() or "No relevant information found."
-        
+        query_engine = index.as_query_engine(similarity_top_k=top_k)
+        response = query_engine.query(query)
+
+        answer_text = str(response).strip()
+        if not answer_text:
+            answer_text = "[No relevant content found in the knowledge base.]"
+
+        sources = []
         if response.source_nodes:
-            sources_info = "\n\nRetrieved Source Files:\n"
-            # Get unique file names
-            seen_files = set()
             for node in response.source_nodes:
-                file_name = node.metadata.get('file_name', 'Unknown Source')
-                if file_name not in seen_files:
-                    sources_info += f"- {file_name}\n"
-                    seen_files.add(file_name)
-            answer_text += sources_info
-            
+                src = node.metadata.get("source", node.metadata.get("file_name", "Unknown"))
+                score = getattr(node, "score", None)
+                chunk_text = node.text[:300] if node.text else ""
+                sources.append(f"Source: {src} (score: {score:.3f})\n{chunk_text}")
+
+        if sources:
+            answer_text += "\n\n--- Retrieved Chunks ---\n" + "\n\n".join(sources)
+
+        logger.info(f"retrieve_context returned {len(sources)} source chunks for query: {query[:80]}")
         return answer_text
 
     except Exception as e:
-        logger.exception("Tool execution failed")
-        return f"Tool Error: {str(e)}"
+        logger.error(f"retrieve_context failed: {e}", exc_info=True)
+        return f"[Retrieval error: {e}]"
+
+
+@tool
+def rag_query_tool(query: str) -> str:
+    """Search the knowledge base for answers to a question."""
+    query_text = query["value"] if isinstance(query, dict) and "value" in query else str(query)
+    return retrieve_context(query_text, top_k=3)
